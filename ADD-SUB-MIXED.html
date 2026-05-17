@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8" />
+  <title>钱币加减混合运算闯关</title>
+
+<style>
+/* 页面布局 */
+body {
+  font-family: "Segoe UI", sans-serif;
+  background: #f0f6ff;
+  margin: 0;
+  padding: 0;
+}
+
+.page {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+}
+
+/* 左侧地图区 */
+.left-panel {
+  flex: 3;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  border: 6px solid #ffcc00;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.map-title {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* 地图行 */
+.map-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+/* 地标按钮（乐高风） */
+.landmark {
+  width: 110px;
+  height: 110px;
+  background: #ffeb3b;
+  border: 5px solid #fbc02d;
+  border-radius: 16px;
+  font-size: 22px;
+  font-weight: 800;
+  text-align: center;
+  padding-top: 10px;
+  cursor: pointer;
+  transition: transform 0.15s;
+  line-height: 1.2;
+}
+
+.landmark:hover {
+  transform: scale(1.08);
+}
+
+.landmark.conquered {
+  background: #d7d7d7;
+  border-color: #9e9e9e;
+  color: #555;
+  cursor: default;
+}
+
+/* 道路 */
+.road, .road-vertical {
+  font-size: 28px;
+  font-weight: 800;
+  color: #888;
+}
+
+/* 右侧分组区 */
+.right-panel {
+  flex: 2;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  border: 6px solid #00bcd4;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.group-title {
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.group-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.group-row input {
+  flex: 1;
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #bbb;
+  font-size: 14px;
+}
+
+.monster {
+  font-size: 24px;
+}
+
+/* 按钮 */
+button {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 6px;
+}
+
+.btn-primary {
+  background: #ff5252;
+  color: #fff;
+}
+
+.btn-secondary {
+  background: #00bcd4;
+  color: #fff;
+}
+
+/* 计分板 */
+.scoreboard {
+  margin-top: 16px;
+  padding: 12px;
+  background: #f1f8e9;
+  border-radius: 12px;
+  border: 3px solid #8bc34a;
+}
+
+.score-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px dashed #c5e1a5;
+}
+
+.score-row:last-child {
+  border-bottom: none;
+}
+
+.score-controls button {
+  padding: 4px 10px;
+  font-size: 14px;
+}
+
+/* 题目区 */
+.question-area {
+  margin: 20px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  border: 6px solid #ff9800;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.question-meta {
+  display: flex;
+  justify-content: space-between;
+  background: linear-gradient(90deg,#ffcc00,#ff9800);
+  padding: 10px;
+  border-radius: 12px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.question-box {
+  border: 4px solid #ff9800;
+  border-radius: 16px;
+  padding: 20px;
+  background: #fff7e0;
+  text-align: center;
+}
+
+.question-text {
+  font-size: 40px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.question-note {
+  font-size: 18px;
+  color: #555;
+}
+
+/* 解答区 */
+.solution-panel {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #e3f2fd;
+  border: 2px dashed #1976d2;
+  display: none;
+  font-family: "Consolas", monospace;
+  font-size: 32px;
+  white-space: pre;
+}
+
+.score-reminder {
+  margin-top: 10px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #d32f2f;
+  display: none;
+}
+
+/* 背景音乐按钮 */
+#bgm-toggle {
+  background: #ffeb3b;
+  border: 4px solid #fbc02d;
+  border-radius: 50%;
+}
+</style>
+</head>
+
+<body>
+
+<button id="bgm-toggle" style="position:fixed; top:20px; right:20px; font-size:26px; padding:10px; z-index:999;">
+  🔊
+</button>
+<audio id="bgm" src="bgm.mp3" loop></audio>
+
+<div class="page">
+
+  <div class="left-panel">
+    <h2 class="map-title">乐高城市闯关地图</h2>
+    <div id="city-map">
+      <div class="map-row">
+        <div class="landmark" data-id="0">🏛️<br>市政厅</div>
+        <div class="road">——</div>
+        <div class="landmark" data-id="1">🏫<br>学校</div>
+        <div class="road">——</div>
+        <div class="landmark" data-id="2">🏥<br>医院</div>
+        <div class="road">——</div>
+        <div class="landmark" data-id="3">🚓<br>警察局</div>
+        <div class="road">——</div>
+        <div class="landmark" data-id="4">🎡<br>游乐园</div>
+      </div>
+      <div class="map-row">
+        <div class="road-vertical">|</div>
+        <div class="landmark" data-id="5">🚒<br>消防局</div>
+        <div class="road">——</div>
+        <div class="landmark" data-id="6">🚉<br>火车站</div>
+        <div class="road">——</div>
+        <div class="landmark" data-id="7">🛍️<br>商场</div>
+        <div class="road">——</div>
+        <div class="landmark" data-id="8">🏦<br>银行</div>
+        <div class="road">——</div>
+        <div class="landmark" data-id="9">🏢<br>办公楼</div>
+      </div>
+      <div class="map-row">
+        <div class="landmark" data-id="10">🏬<br>百货公司</div>
+        <div class="road">——</div>
+        <div class="landmark" data-id="11">🚌<br>巴士总站</div>
+        <div class="road">——</div>
+        <div class="landmark" data-id="12">🏨<br>酒店</div>
+        <div class="road">——</div>
+        <div class="landmark" data-id="13">🏭<br>工厂</div>
+        <div class="road">——</div>
+        <div class="landmark" data-id="14">🏰<br>城堡</div>
+      </div>
+      <div class="map-row">
+        <div class="road-vertical">|</div>
+        <div class="landmark" data-id="15">🎪<br>马戏团</div>
+        <div class="road">——</div>
+        <div class="landmark" data-id="16">🚀<br>火箭基地</div>
+        <div class="road">——</div>
+        <div class="landmark" data-id="17">🛸<br>外星站</div>
+        <div class="road">——</div>
+        <div class="landmark" data-id="18">🐲<br>龙之塔</div>
+        <div class="road">——</div>
+        <div class="landmark" data-id="19">🤖<br>机器人中心</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <h2 class="group-title">分组与怪兽代表</h2>
+    <div id="group-container"></div>
+    <button id="add-group-btn" class="btn-secondary">新增组别</button>
+    <button id="lock-groups-btn" class="btn-primary">锁定分组并开始答题</button>
+    <div class="scoreboard" id="scoreboard"></div>
+  </div>
+
+</div>
+
+<div class="question-area" id="question-area" style="display:none;">
+  <div class="question-meta">
+    <div id="question-index">第 1 / 7 题</div>
+    <div>请抄写题目到簿子里</div>
+  </div>
+  <div class="question-box">
+    <div class="question-text" id="question-text"></div>
+    <div class="question-note">在簿子上写出竖式并计算答案</div>
+  </div>
+  <div class="question-actions">
+    <button id="show-solution-btn" class="btn-primary" disabled>显示竖式解答</button>
+    <button id="hide-solution-btn" class="btn-secondary" disabled>隐藏解答</button>
+  </div>
+  <div id="solution-panel" class="solution-panel"></div>
+  <div id="score-reminder" class="score-reminder">请为本题计分</div>
+</div>
+
+<script>
+/* ===========================
+   背景音乐控制
+=========================== */
+let bgm = document.getElementById("bgm");
+let bgmBtn = document.getElementById("bgm-toggle");
+let bgmPlaying = false;
+
+bgmBtn.onclick = () => {
+  if (!bgmPlaying) {
+    bgm.play().catch(e => console.log("BGM播放需要用户交互激活"));
+    bgmBtn.textContent = "🔇";
+  } else {
+    bgm.pause();
+    bgmBtn.textContent = "🔊";
+  }
+  bgmPlaying = !bgmPlaying;
+};
+
+/* ===========================
+   分组系统
+=========================== */
+let groupCount = 0;
+let groupsLocked = false;
+const monsters = ["👾","👹","👻","🐲","🦖","🦄","🐉","👺","🤖","👽"];
+const scores = [];
+
+const groupContainer = document.getElementById("group-container");
+const scoreboardEl = document.getElementById("scoreboard");
+
+// 为新增按钮直接绑定 onclick 事件
+document.getElementById("add-group-btn").onclick = function() {
+  if (groupsLocked) return;
+
+  const monster = monsters[groupCount % monsters.length];
+  const row = document.createElement("div");
+  row.className = "group-row";
+  row.innerHTML = `
+    <span class="monster">${monster}</span>
+    <input type="text" placeholder="组名" oninput="renderScoreboard()">
+  `;
+  groupContainer.appendChild(row);
+
+  scores.push(0);
+  groupCount++;
+  renderScoreboard();
+};
+
+/* ===========================
+   计分板
+=========================== */
+function renderScoreboard() {
+  scoreboardEl.innerHTML = "";
+  const rows = groupContainer.querySelectorAll(".group-row");
+  
+  rows.forEach((row, idx) => {
+    const nameInput = row.querySelector("input");
+    const name = nameInput ? nameInput.value.trim() : "";
+    if (!name) return;
+
+    const monster = row.querySelector(".monster").textContent;
+    const div = document.createElement("div");
+    div.className = "score-row";
+    div.innerHTML = `
+      <div>${monster} ${name}</div>
+      <div class="score-controls">
+        <button onclick="changeScore(${idx}, -1)">−</button>
+        <span>${scores[idx]}</span>
+        <button onclick="changeScore(${idx}, 1)">+</button>
+      </div>
+    `;
+    scoreboardEl.appendChild(div);
+  });
+}
+
+function changeScore(idx, delta) {
+  scores[idx] += delta;
+  if (scores[idx] < 0) scores[idx] = 0;
+  renderScoreboard();
+}
+
+/* ===========================
+   题库（完整的 7 道题）
+=========================== */
+const questions = [
+  {
+    text: "RM350.40 + RM128.60 − RM12.50 = ?",
+    solution: "  350.40\n+ 128.60\n--------\n  479.00\n−  12.50\n--------\n  466.50"
+  },
+  {
+    text: "RM1200.80 − RM450.30 + RM9.50 = ?",
+    solution: " 1200.80\n− 450.30\n--------\n  750.50\n+   9.50\n--------\n  760.00"
+  },
+  {
+    text: "RM2500.00 + RM399.90 − RM188.40 = ?",
+    solution: " 2500.00\n+ 399.90\n--------\n 2899.90\n− 188.40\n--------\n 2711.50"
+  },
+  {
+    text: "RM560.70 − RM120.50 − RM39.20 = ?",
+    solution: " 560.70\n−120.50\n--------\n 440.20\n− 39.20\n--------\n 401.00"
+  },
+  {
+    text: "RM899.90 + RM145.10 + RM220.00 − RM130.50 = ?",
+    solution: "  899.90\n+ 145.10\n--------\n 1045.00\n+ 220.00\n--------\n 1265.00\n− 130.50\n--------\n 1265.00"
+  },
+  {
+    text: "RM3000.00 − RM125.75 + RM9.25 = ?",
+    solution: " 3000.00\n− 125.75\n--------\n 2874.25\n+   9.25\n--------\n 2883.50"
+  },
+  {
+    text: "RM9999.90 − RM4500.40 − RM999.50 = ?",
+    solution: " 9999.90\n−4500.40\n--------\n 5499.50\n− 999.50\n--------\n 4500.00"
+  }
+];
+
+/* ===========================
+   核心游戏逻辑
+=========================== */
+let currentQuestionIdx = 0;
+
+document.getElementById("lock-groups-btn").onclick = function() {
+  const rows = groupContainer.querySelectorAll(".group-row");
+  let validGroupCount = 0;
+  rows.forEach(row => {
+    if(row.querySelector("input").value.trim()) validGroupCount++;
+  });
+
+  if (validGroupCount === 0) {
+    alert("请至少添加一个有名字的分组！");
+    return;
+  }
+
+  groupsLocked = true;
+  document.getElementById("add-group-btn").disabled = true;
+  document.getElementById("lock-groups-btn").disabled = true;
+  groupContainer.querySelectorAll("input").forEach(input => input.disabled = true);
+  
+  document.getElementById("question-area").style.display = "block";
+  loadQuestion(0);
+};
+
+function loadQuestion(idx) {
+  if (idx >= questions.length) {
+    alert("所有关卡已完成！");
+    return;
+  }
+  currentQuestionIdx = idx;
+  document.getElementById("question-index").textContent = `第 ${idx + 1} / ${questions.length} 题`;
+  document.getElementById("question-text").textContent = questions[idx].text;
+  
+  const solPanel = document.getElementById("solution-panel");
+  solPanel.style.display = "none";
+  solPanel.textContent = questions[idx].solution;
+  
+  document.getElementById("show-solution-btn").disabled = false;
+  document.getElementById("hide-solution-btn").disabled = true;
+  document.getElementById("score-reminder").style.display = "none";
+}
+
+document.getElementById("show-solution-btn").onclick = function() {
+  document.getElementById("solution-panel").style.display = "block";
+  document.getElementById("show-solution-btn").disabled = true;
+  document.getElementById("hide-solution-btn").disabled = false;
+  document.getElementById("score-reminder").style.display = "block";
+};
+
+document.getElementById("hide-solution-btn").onclick = function() {
+  document.getElementById("solution-panel").style.display = "none";
+  document.getElementById("show-solution-btn").disabled = false;
+  document.getElementById("hide-solution-btn").disabled = true;
+};
+
+// 地图标注点击
+document.querySelectorAll(".landmark").forEach(landmark => {
+  landmark.onclick = function() {
+    if (!groupsLocked) {
+      alert("请先在右侧创建并锁定分组，再开始闯关！");
+      return;
+    }
+    if (this.classList.contains("conquered")) return;
+    
+    const id = parseInt(this.getAttribute("data-id"));
+    loadQuestion(id % questions.length);
+    this.classList.add("conquered");
+  };
+});
+</script>
+
+</body>
+</html>
